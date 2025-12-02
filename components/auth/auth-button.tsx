@@ -7,9 +7,11 @@ import {
    LogOut,
    Settings,
    User as UserIcon,
+   Shield,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
+import { isAdmin } from "@/lib/auth/roles";
 import {
    DropdownMenu,
    DropdownMenuContent,
@@ -71,7 +73,7 @@ export default function AuthButton() {
          </Button>
       );
    }
-
+   console.log("Authenticated user:", user);
    return (
       <>
          <DropdownMenu>
@@ -96,9 +98,23 @@ export default function AuthButton() {
                      <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                      </p>
+                     {isAdmin(user) && (
+                        <p className="text-xs text-primary font-medium">Admin</p>
+                     )}
                   </div>
                </DropdownMenuLabel>
                <DropdownMenuSeparator />
+               {isAdmin(user) && (
+                  <>
+                     <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                           <Shield className="mr-2 h-4 w-4" />
+                           <span>Admin Dashboard</span>
+                        </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuSeparator />
+                  </>
+               )}
                <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Edit Profile</span>
