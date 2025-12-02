@@ -2,43 +2,42 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Shirt, Watch, ShoppingBag } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-
+import Image from "next/image";
+import { HeroImage, PantImage, ShirtImage, ShoeImage, TShirtsImage, WatchImage } from "@/assets/common";
 const categories = [
    {
       name: "Shirts",
-      icon: Shirt,
+      image: ShirtImage, // Add your 400x400px image
       count: "120+ Styles",
       href: "/products?category=shirts",
    },
    {
       name: "T-Shirts",
-      icon: ShoppingBag,
+      image: TShirtsImage, // Add your 400x400px image
       count: "150+ Designs",
       href: "/products?category=t-shirts",
    },
    {
       name: "Pants",
-      icon: ShoppingBag,
+      image: PantImage, // Add your 400x400px image
       count: "80+ Fits",
       href: "/products?category=pants",
    },
    {
       name: "Shoes",
-      icon: ShoppingBag,
+      image: ShoeImage, // Add your 400x400px image
       count: "90+ Pairs",
       href: "/products?category=shoes",
    },
    {
       name: "Watches",
-      icon: Watch,
+      image: WatchImage,// Add your 400x400px image
       count: "60+ Timepieces",
       href: "/products?category=watches",
    },
-];
-
-export function HeroSection() {
+]; export function HeroSection() {
    return (
       <section className="relative w-full">
          {/* Main Hero */}
@@ -90,20 +89,17 @@ export function HeroSection() {
                   </div>
                </div>
 
-               {/* Right Content - Hero Image Placeholder */}
+               {/* Right Content - Hero Image */}
                <div className="relative aspect-square lg:aspect-auto lg:h-[600px]">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center">
-                     <div className="text-center space-y-4 p-8">
-                        <div className="w-32 h-32 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                           <ShoppingBag className="w-16 h-16 text-primary" />
-                        </div>
-                        <p className="text-muted-foreground">
-                           Add your hero image here
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                           Recommended: 1200x1200px
-                        </p>
-                     </div>
+                  <div className="relative w-full h-full rounded-2xl overflow-hidden">
+                     <Image
+                        src={HeroImage}
+                        alt="Men's Fashion Collection"
+                        fill
+                        className="object-cover"
+                        priority
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                     />
                   </div>
                </div>
             </div>
@@ -127,17 +123,21 @@ export function HeroSection() {
                         href={category.href}
                         className="group"
                      >
-                        <div className="bg-background rounded-lg p-6 border border-border hover:border-primary hover:shadow-lg transition-all duration-300">
-                           <div className="flex flex-col items-center text-center space-y-3">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                 <category.icon className="w-6 h-6 text-primary" />
-                              </div>
-                              <div>
-                                 <h3 className="font-semibold">{category.name}</h3>
-                                 <p className="text-sm text-muted-foreground">
-                                    {category.count}
-                                 </p>
-                              </div>
+                        <div className="bg-background rounded-lg overflow-hidden border border-border hover:border-primary hover:shadow-lg transition-all duration-300">
+                           <div className="relative aspect-square w-full bg-secondary/30">
+                              <Image
+                                 src={category.image}
+                                 alt={category.name}
+                                 fill
+                                 className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                              />
+                           </div>
+                           <div className="p-4 text-center">
+                              <h3 className="font-semibold">{category.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                 {category.count}
+                              </p>
                            </div>
                         </div>
                      </Link>
