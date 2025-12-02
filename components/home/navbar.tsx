@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/common/logo.png";
 import { ShoppingCart, User, Search, X } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { cn } from "@/lib/utils";
+import AuthButton from "../auth/auth-button";
 
 export function Navbar() {
+
    const [searchOpen, setSearchOpen] = useState(false);
    const [searchQuery, setSearchQuery] = useState("");
 
@@ -88,12 +90,8 @@ export function Navbar() {
                         <span className="sr-only">Shopping Cart</span>
                      </Link>
                   </Button>
-                  <Button variant="ghost" size="icon" asChild>
-                     <Link href="/auth">
-                        <User className="h-5 w-5" />
-                        <span className="sr-only">Account</span>
-                     </Link>
-                  </Button>
+                  <AuthButton />
+
                </div>
 
                {/* Close Search Button - Shows when search is open on mobile */}

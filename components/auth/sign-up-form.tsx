@@ -35,12 +35,11 @@ export const SignUpForm = () => {
     }
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${baseUrl}/auth/confirm?next=${encodeURIComponent("/")}`,
+          emailRedirectTo: `${window.location.origin}`,
         },
       });
       if (error) throw error;
