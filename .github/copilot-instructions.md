@@ -1,144 +1,54 @@
-# Hexa Shop - AI Agent Instructions
+# Hexa Shop — AI Agent Instructions
 
-## Project Overview
+Concise guidance for coding agents to be productive immediately.
 
-Next.js 15 e-commerce application for men's products using App Router, React 19, TypeScript, Supabase authentication, and shadcn/ui components. Built with pnpm and styled with Tailwind CSS using a custom warm color palette.
+## Architecture
 
-## Architecture & Key Patterns
+- Next.js 15 App Router with React 19 and TypeScript. Styled via Tailwind and shadcn/ui. Auth via Supabase cookies.
+- Root layout `app/(root)/layout.tsx` wraps pages with `components/home/navbar.tsx`.
+- Admin area under `app/(root)/admin/*` guarded by role checks in `lib/auth/admin-guard.ts` and `lib/auth/roles.ts`.
 
-### Supabase Authentication Flow (CRITICAL)
+## Auth (critical)
 
-**Three distinct client patterns** - use the correct one for context:
+- Client components use `@/lib/supabase/client` → `const supabase = createClient()`.
+- Server components, route handlers, server actions use `@/lib/supabase/server` → `const supabase = await createClient()`.
+- Do not store server clients globally; instantiate per request.
+- Middleware proxy: `proxy.ts` + `lib/supabase/proxy.ts` must call `getClaims()` and set cookies on request/response. Redirect unauthenticated users to `/auth`. Matcher excludes `_next/static`, `_next/image`, `favicon.ico`, image files.
+- Email confirmation flow: `components/auth/sign-up-form.tsx` sets `emailRedirectTo` → `app/auth/confirm/route.ts` verifies via `supabase.auth.verifyOtp()` and redirects to `next`.
 
-```typescript
-// Client Components (forms, interactive UI)
-import { createClient } from "@/lib/supabase/client";
-const supabase = createClient();
+## Patterns & Conventions
 
-// Server Components, Route Handlers, Server Actions
-import { createClient } from "@/lib/supabase/server";
-const supabase = await createClient(); // async!
-```
+- Page–Form split for auth: page `app/auth/page.tsx` manages tabs; forms in `components/auth/*` are client components with controlled inputs and inline error display.
+- `@/*` path alias for imports. Use `cn()` from `lib/utils.ts` for class merging.
+- Strict TypeScript; React 19 (no `import React`). Client components require `"use client"` directive.
+- Theme variables in `app/globals.css` (primary `#c96442`, background `#faf9f5`). shadcn style: `components.json` set to "new-york" with lucide icons.
 
-**NEVER store server clients in global variables** - Fluid compute requires per-request instantiation.
+## Admin
 
-**Authentication middleware** (`proxy.ts` + `lib/supabase/proxy.ts`):
+- Sidebar `components/admin/app-sidebar.tsx`. Pages: `customers`, `orders`, `products` under `app/(root)/admin/*`.
+- Protect admin routes with `admin-guard.ts` server utilities. Enforce roles from `lib/auth/roles.ts`.
 
-- `getClaims()` call is mandatory - removing it causes random logouts
-- Cookie handling in both request/response - see `lib/supabase/proxy.ts` lines 28-39
-- Redirects unauthenticated users to `/auth` (except `/auth/*` paths)
-- Matcher excludes: `_next/static`, `_next/image`, `favicon.ico`, images (`.svg|png|jpg|jpeg|gif|webp`)
+## Commands
 
-### Authentication Implementation Pattern
+- `pnpm dev` — start on `localhost:3000`.
+- `pnpm build && pnpm start` — production test.
+- `pnpm lint` — Next.js ESLint.
+- `pnpm dlx shadcn@latest add <name>` — install UI primitives to `components/ui/`.
 
-**Page-Form separation** enforced across all auth flows:
+## Env Vars
 
-- Page: `app/auth/page.tsx` (unified login/signup with tabs via `?tab=` query param)
-- Forms: `components/auth/login-form.tsx`, `sign-up-form.tsx` (client components)
-- Pattern: Controlled inputs + React state + inline error display + router navigation
+- `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_BASE_URL`.
+- `lib/utils.ts` exports `hasEnvVars` to optionally skip auth check in `proxy.ts` during setup.
 
-**Email verification flow**:
+## Gotchas
 
-1. Signup → `emailRedirectTo: /auth/confirm?next=<path>`
-2. User clicks email link → `GET /auth/confirm` route handler
-3. Verifies OTP via `supabase.auth.verifyOtp()` → redirects to `next` param
+- Keep `getClaims()` in proxy; removing causes silent logouts.
+- Preserve cookie handling and `setAll` try/catch in `lib/supabase/server.ts`.
+- Auth redirect defaults to `/` in forms; update if protected target changes.
+- Maintain middleware matcher static asset exclusions when editing.
 
-### File Organization
+## Component Usage
 
-```
-app/
-  (root)/           # Route group with Navbar layout
-    layout.tsx      # Wraps pages with <Navbar />
-    page.tsx        # Homepage
-  auth/
-    page.tsx        # Unified login/signup with Tabs
-    callback/       # OAuth callback handler
-    confirm/        # Email verification handler
-    forgot-password/
-    update-password/
-components/
-  auth/             # All 7 auth forms (login, signup, forgot-password, etc.)
-  home/             # Feature components (navbar)
-  ui/               # shadcn/ui primitives (13 components installed)
-lib/
-  supabase/         # Three client factories + proxy logic
-  utils.ts          # cn() helper + hasEnvVars check
-```
+- shadcn components under `components/ui/*` with CVA variants. Example: `<Button variant="outline" size="lg">…</Button>`.
 
-**Path aliases**: `@/*` → project root (all imports use this)
-
-### Styling System
-
-**Custom theme** in `app/globals.css`:
-
-- Primary: `#c96442` (terracotta)
-- Background: `#faf9f5` (warm cream)
-- Variables: `--primary`, `--background`, etc. (Tailwind reads via `var()`)
-
-**shadcn/ui config** (`components.json`):
-
-- Style: "new-york" (denser spacing, smaller text)
-- Base color: "neutral"
-- Icons: lucide-react
-- All components use CVA for variants + `cn()` for className merging
-
-**Example component usage**:
-
-```tsx
-<Button variant="outline" size="lg">
-  Click Me
-</Button>
-// variants: default | destructive | outline | secondary | ghost | link
-// sizes: default | sm | lg | icon
-```
-
-## Development Workflow
-
-### Commands
-
-```bash
-pnpm dev                           # localhost:3000
-pnpm build && pnpm start           # Production test
-pnpm lint                          # ESLint (Next.js config)
-pnpm dlx shadcn@latest add <name>  # Install UI component
-```
-
-### Adding Components
-
-1. **shadcn/ui**: `pnpm dlx shadcn@latest add button` → auto-installs to `components/ui/`
-2. **Custom components**: Group by feature (`components/auth/`, `components/home/`)
-3. **Always use `@/` alias** for imports
-
-### Environment Variables
-
-Required in `.env.local`:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_BASE_URL` (for metadata + email redirects)
-
-Validation: `lib/utils.ts` exports `hasEnvVars` boolean (used in proxy.ts to skip auth check during setup)
-
-## Key Conventions
-
-- **TypeScript strict mode** - no implicit any, strict null checks
-- **React 19** - JSX transform enabled (no `import React` needed)
-- **No emojis in UI** unless specified
-- **next-themes** configured but light theme primary
-- **Geist font** via `next/font/google` in root layout
-- **Client components** must have `"use client"` directive at top (all auth forms, interactive components)
-- **Server components** are default - use for layouts, static pages
-
-## Critical Gotchas
-
-1. **Proxy middleware `getClaims()` is non-negotiable** - removing causes silent session expiration
-2. **Server client cookie handling** - never simplify `lib/supabase/server.ts` setAll try/catch (see comment lines 18-23)
-3. **Auth redirect target** - currently hardcoded to `/` in forms, update if protected route changes
-4. **Middleware matcher** - modify carefully, must maintain static asset exclusions
-5. **Email confirmation** - `emailRedirectTo` must include `NEXT_PUBLIC_BASE_URL` as base (see `sign-up-form.tsx` line 38)
-
-## Component Reference
-
-**Installed shadcn/ui components**: Badge, Button, Card, Carousel, Checkbox, Dialog, Dropdown Menu, Field, Input, Label, Select, Separator, Skeleton, Sonner (toast), Spinner, Tabs
-
-**Auth components**: auth-button, google-auth-button, login-form, logout-button, sign-up-form, forgot-password-form, update-password-form
+Refer to `README.md` for generic Supabase starter context; this repo customizes theme, auth pages, and admin guard.

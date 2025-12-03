@@ -1,54 +1,64 @@
+import { Suspense } from "react";
 import { requireAdmin } from "@/lib/auth/admin-guard";
+import { AppSidebar } from "@/components/admin/app-sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import {
+   Breadcrumb,
+   BreadcrumbItem,
+   BreadcrumbLink,
+   BreadcrumbList,
+   BreadcrumbPage,
+   BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
-export default async function AdminLayout({
+async function AdminGuard() {
+   await requireAdmin();
+   return null;
+}
+
+export default function AdminLayout({
    children,
 }: {
    children: React.ReactNode;
 }) {
-   await requireAdmin();
-
    return (
-      <div className="min-h-screen bg-background">
-         <div className="border-b">
-            <div className="container mx-auto px-4 py-4">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                     <a href="/" className="text-sm text-muted-foreground hover:text-foreground">
-                        ← Back to Store
-                     </a>
-                     <div className="h-4 w-px bg-border" />
-                     <h2 className="text-lg font-semibold">Admin Panel</h2>
-                  </div>
-                  <nav className="flex gap-4">
-                     <a
-                        href="/admin"
-                        className="text-sm hover:text-primary transition-colors"
-                     >
-                        Dashboard
-                     </a>
-                     <a
-                        href="/admin/products"
-                        className="text-sm hover:text-primary transition-colors"
-                     >
-                        Products
-                     </a>
-                     <a
-                        href="/admin/orders"
-                        className="text-sm hover:text-primary transition-colors"
-                     >
-                        Orders
-                     </a>
-                     <a
-                        href="/admin/users"
-                        className="text-sm hover:text-primary transition-colors"
-                     >
-                        Users
-                     </a>
-                  </nav>
-               </div>
-            </div>
+      <>
+         <Suspense fallback={null}>
+            <AdminGuard />
+         </Suspense>
+         <div className="relative flex h-screen w-full overflow-hidden">
+            <SidebarProvider>
+               <AppSidebar />
+               <SidebarInset className="flex-1">
+                  <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                     <div className="flex items-center gap-2 px-4">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator
+                           orientation="vertical"
+                           className="mr-2 data-[orientation=vertical]:h-4"
+                        />
+                        <Breadcrumb>
+                           <BreadcrumbList>
+                              <BreadcrumbItem className="hidden md:block">
+                                 <BreadcrumbLink href="/admin">
+                                    Admin
+                                 </BreadcrumbLink>
+                              </BreadcrumbItem>
+                              <BreadcrumbSeparator className="hidden md:block" />
+                              <BreadcrumbItem>
+                                 <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                              </BreadcrumbItem>
+                           </BreadcrumbList>
+                        </Breadcrumb>
+                     </div>
+                  </header>
+                  <main className="flex-1 overflow-y-auto bg-muted/40">
+                     {children}
+                  </main>
+               </SidebarInset>
+            </SidebarProvider>
          </div>
-         {children}
-      </div>
+      </>
    );
 }
