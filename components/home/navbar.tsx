@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/common/logo.png";
-import { ShoppingCart, User, Search, X } from "lucide-react";
+import { ShoppingCart, User, Search, X, Hexagon } from "lucide-react";
 import { Suspense, useState } from "react";
 import { cn } from "@/lib/utils";
 import AuthButton from "../auth/auth-button";
@@ -27,13 +27,7 @@ export function Navbar() {
                      searchOpen && "hidden md:flex"
                   )}
                >
-                  <Image
-                     src={logo}
-                     alt="Hexa Shop Logo"
-                     width={40}
-                     height={40}
-                     className="h-10 w-10"
-                  />
+                  <Hexagon strokeWidth={3} className="h-8 w-8 text-primary" />
                   <span className="text-xl font-bold text-primary">Hexa Shop</span>
                </Link>
 

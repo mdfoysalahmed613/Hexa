@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Next.js 15 e-commerce application for men's products using App Router, React 19, TypeScript, Supabase authentication, and shadcn/ui components. Built with pnpm and styled with Tailwind CSS using a custom warm color palette.
+Next.js 16 (Turbopack) e-commerce application for men's products using App Router, React 19, TypeScript, Supabase authentication, and shadcn/ui components. Built with pnpm and styled with Tailwind CSS using a custom warm color palette.
 
 ## Architecture & Key Patterns
 
@@ -24,10 +24,39 @@ const supabase = await createClient(); // async!
 
 **Authentication middleware** (`proxy.ts` + `lib/supabase/proxy.ts`):
 
-- `getClaims()` call is mandatory - removing it causes random logouts
+- `getClaims()` call is **mandatory** - removing it causes random logouts
 - Cookie handling in both request/response - see `lib/supabase/proxy.ts` lines 28-39
 - Redirects unauthenticated users to `/auth` (except `/auth/*` paths)
+- **Admin route protection**: `/admin/*` checks for `app_metadata.role === "admin"` and redirects non-admins to `/`
 - Matcher excludes: `_next/static`, `_next/image`, `favicon.ico`, images (`.svg|png|jpg|jpeg|gif|webp`)
+
+### Admin System (Role-Based Access)
+
+**Role assignment** (see `ADMIN_SETUP.md`):
+
+- Admin role stored in `user_metadata.role` or `app_metadata.role`
+- Assign via Supabase SQL: `UPDATE auth.users SET raw_user_meta_data = raw_user_meta_data || '{"role": "admin"}'::jsonb WHERE email = 'user@example.com';`
+- User must logout/login after role change
+
+**Admin guards**:
+
+- **Server-side**: `requireAdmin()` from `lib/auth/admin-guard.ts` (use in page components, redirects if not admin)
+- **Client-side**: `isAdmin(user)` from `lib/auth/roles.ts` (for UI conditional rendering)
+- **Middleware**: `lib/supabase/proxy.ts` checks admin role on `/admin/*` routes
+
+**Admin pages structure**:
+
+```
+app/admin/
+  layout.tsx        # requireAdmin() + nav bar (Dashboard, Products, Orders, Users)
+  page.tsx          # Dashboard with stats cards and quick actions
+```
+
+**Admin UI features**:
+
+- `auth-button.tsx` shows "Admin" badge and "Admin Dashboard" menu item for admin users
+- Admin layout includes "Back to Store" link and simplified navigation
+- Dashboard shows mock stats (users, products, orders, revenue) - replace with real data
 
 ### Authentication Implementation Pattern
 
@@ -43,26 +72,32 @@ const supabase = await createClient(); // async!
 2. User clicks email link → `GET /auth/confirm` route handler
 3. Verifies OTP via `supabase.auth.verifyOtp()` → redirects to `next` param
 
+**Profile editing**: `edit-profile-dialog.tsx` updates `full_name`, `avatar_url`, `phone` via `supabase.auth.updateUser()`
+
 ### File Organization
 
 ```
 app/
   (root)/           # Route group with Navbar layout
     layout.tsx      # Wraps pages with <Navbar />
-    page.tsx        # Homepage
-  auth/
+    page.tsx        # Homepage with HeroSection
+  admin/            # Admin panel (protected)
+    layout.tsx      # requireAdmin() guard + admin nav
+    page.tsx        # Dashboard
+  auth/             # Auth pages
     page.tsx        # Unified login/signup with Tabs
     callback/       # OAuth callback handler
     confirm/        # Email verification handler
-    forgot-password/
-    update-password/
+    forgot-password/, update-password/, error/, sign-up-success/
 components/
-  auth/             # All 7 auth forms (login, signup, forgot-password, etc.)
-  home/             # Feature components (navbar)
-  ui/               # shadcn/ui primitives (13 components installed)
+  auth/             # Auth forms + auth-button with admin UI
+  home/             # hero-section, navbar
+  ui/               # shadcn/ui primitives (20+ components)
 lib/
-  supabase/         # Three client factories + proxy logic
+  auth/             # admin-guard, roles helpers
+  supabase/         # client, server, proxy
   utils.ts          # cn() helper + hasEnvVars check
+assets/common/      # Images (logo, hero, categories)
 ```
 
 **Path aliases**: `@/*` → project root (all imports use this)
@@ -92,12 +127,20 @@ lib/
 // sizes: default | sm | lg | icon
 ```
 
+**Toast notifications**: Import `toast` from `sonner`, `<Toaster />` in root layout
+
+```tsx
+import { toast } from "sonner";
+toast.success("Success message");
+toast.error("Error message");
+```
+
 ## Development Workflow
 
 ### Commands
 
 ```bash
-pnpm dev                           # localhost:3000
+pnpm dev                           # localhost:3000 (Turbopack)
 pnpm build && pnpm start           # Production test
 pnpm lint                          # ESLint (Next.js config)
 pnpm dlx shadcn@latest add <name>  # Install UI component
@@ -126,8 +169,10 @@ Validation: `lib/utils.ts` exports `hasEnvVars` boolean (used in proxy.ts to ski
 - **No emojis in UI** unless specified
 - **next-themes** configured but light theme primary
 - **Geist font** via `next/font/google` in root layout
-- **Client components** must have `"use client"` directive at top (all auth forms, interactive components)
-- **Server components** are default - use for layouts, static pages
+- **Client components** must have `"use client"` directive at top (all auth forms, interactive components, navbar)
+- **Server components** are default - use for layouts, static pages, admin pages
+- **Navigation**: Use `<Link href="...">` from `next/link` for internal links, `<a href="...">` only in admin layout
+- **Images**: Use `<Image>` from `next/image` with `fill` prop for responsive images
 
 ## Critical Gotchas
 
@@ -136,9 +181,25 @@ Validation: `lib/utils.ts` exports `hasEnvVars` boolean (used in proxy.ts to ski
 3. **Auth redirect target** - currently hardcoded to `/` in forms, update if protected route changes
 4. **Middleware matcher** - modify carefully, must maintain static asset exclusions
 5. **Email confirmation** - `emailRedirectTo` must include `NEXT_PUBLIC_BASE_URL` as base (see `sign-up-form.tsx` line 38)
+6. **Admin role** - stored in `app_metadata.role`, not `user_metadata.role` (middleware checks `app_metadata` first)
+7. **Sidebar component** - complex state management, avoid editing unless necessary (causes Fast Refresh full reloads)
 
 ## Component Reference
 
-**Installed shadcn/ui components**: Badge, Button, Card, Carousel, Checkbox, Dialog, Dropdown Menu, Field, Input, Label, Select, Separator, Skeleton, Sonner (toast), Spinner, Tabs
+**Installed shadcn/ui components**: Avatar, Badge, Button, Card, Carousel, Checkbox, Dialog, Dropdown Menu, Field, Hover Card, Input, Label, Select, Separator, Sheet, Sidebar, Skeleton, Sonner (toast), Spinner, Tabs, Tooltip
 
-**Auth components**: auth-button, google-auth-button, login-form, logout-button, sign-up-form, forgot-password-form, update-password-form
+**Auth components**: auth-button (with admin UI), edit-profile-dialog, google-auth-button, login-form, sign-up-form, forgot-password-form, update-password-form
+
+**Home components**: navbar (with mobile search), hero-section (with category cards)
+
+**Admin components**: Layout in `app/admin/layout.tsx`, Dashboard in `app/admin/page.tsx` (more pages TBD)
+
+## Next Steps / TODO
+
+- Implement product management pages (`/admin/products`)
+- Implement order management pages (`/admin/orders`)
+- Implement user management pages (`/admin/users`)
+- Connect admin dashboard to real database tables
+- Add product listing pages (`/products`)
+- Add cart functionality (`/cart`)
+- Add Supabase database schema and migrations

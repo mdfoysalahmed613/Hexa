@@ -6,8 +6,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL!),
-  title: "Hexa Shop - Crafted for Men Who Demand More",
-  description: "Hexa Shop brings premium tees, pants, wallets, and accessories built for superior comfort and lasting performance.",
+  title: "Hexa Shop - Premium Essentials for the Modern Man",
+  description: "Discover curated menswear and accessories crafted with premium materials and timeless design. Hexa Shop offers shirt, pants, wallets, and everyday essentials built to elevate your style and confidence.",
 };
 
 const geistSans = Geist({

@@ -50,13 +50,11 @@ const categories = [
                   </Badge>
                   <div className="space-y-4">
                      <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                        Crafted for Men Who{" "}
-                        <span className="text-primary">Demand More</span>
+                        Premium Essentials for the {" "}
+                        <span className="text-primary">Modern Man</span>
                      </h1>
                      <p className="text-lg text-muted-foreground md:text-xl max-w-[600px]">
-                        Premium collection of shirts, pants, shoes, and accessories
-                        built for superior comfort and lasting performance. Elevate
-                        your style with Hexa Shop.
+                        Hexa Shop offers shirts, pants, wallets, and everyday essentials built to elevate your style and confidence.
                      </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4">
